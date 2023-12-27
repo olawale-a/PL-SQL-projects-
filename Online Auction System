@@ -1,0 +1,68 @@
+CREATE TABLE Item (
+    ItemID INT PRIMARY KEY,
+    ItemName VARCHAR(100),
+    Description VARCHAR(255),
+    CurrentHighestBid DECIMAL(10, 2),
+    WinnerUserID INT,
+    AuctionStatus VARCHAR(20) DEFAULT 'Open' -- 'Open' or 'Closed'
+);
+
+CREATE TABLE Bid (
+    BidID INT PRIMARY KEY,
+    ItemID INT,
+    BidderUserID INT,
+    BidAmount DECIMAL(10, 2),
+    BidTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ItemID) REFERENCES Item(ItemID),
+    FOREIGN KEY (BidderUserID) REFERENCES User(UserID) -- Assuming a User table exists
+);
+
+
+-- Stored Procedure to Place Bid
+CREATE PROCEDURE PlaceBid (
+    IN p_ItemID INT,
+    IN p_BidderUserID INT,
+    IN p_BidAmount DECIMAL(10, 2)
+)
+BEGIN
+    DECLARE currentHighestBid DECIMAL(10, 2);
+
+    -- Fetch current highest bid for the item
+    SELECT CurrentHighestBid INTO currentHighestBid FROM Item WHERE ItemID = p_ItemID;
+
+    -- Check if the new bid is higher
+    IF p_BidAmount > currentHighestBid THEN
+        -- Update Item table with new highest bid
+        UPDATE Item SET CurrentHighestBid = p_BidAmount WHERE ItemID = p_ItemID;
+
+        -- Insert bid details into Bid table
+        INSERT INTO Bid (ItemID, BidderUserID, BidAmount) VALUES (p_ItemID, p_BidderUserID, p_BidAmount);
+    END IF;
+END;
+
+-- Stored Procedure to Determine Winner
+CREATE PROCEDURE DetermineWinner (
+    IN p_ItemID INT
+)
+BEGIN
+    -- Update AuctionStatus to 'Closed'
+    UPDATE Item SET AuctionStatus = 'Closed' WHERE ItemID = p_ItemID;
+
+    -- Determine winner based on the highest bid
+    UPDATE Item SET WinnerUserID = (
+        SELECT BidderUserID FROM Bid WHERE ItemID = p_ItemID AND BidAmount = (
+            SELECT MAX(BidAmount) FROM Bid WHERE ItemID = p_ItemID
+        )
+    ) WHERE ItemID = p_ItemID;
+END;
+
+
+--Test Cases
+-- 1. Place Bid 
+EXEC PlaceBid(501, 101, 200.00);
+-- Check the database to ensure the bid is placed
+
+--2. Determine Winner 
+EXEC DetermineWinner(501);
+-- Check the database to verify the winner is determined
+

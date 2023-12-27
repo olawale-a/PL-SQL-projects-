@@ -1,0 +1,55 @@
+CREATE TABLE Employee (
+    EmployeeID INT PRIMARY KEY,
+    Name VARCHAR(100),
+    DepartmentID INT,
+    Salary DECIMAL(10, 2),
+    -- Add other relevant columns
+);
+
+CREATE TABLE Department (
+    DepartmentID INT PRIMARY KEY,
+    DepartmentName VARCHAR(50)
+);
+
+CREATE TABLE PerformanceMetrics (
+    EmployeeID INT PRIMARY KEY,
+    PerformanceScore INT,
+    Bonus DECIMAL(8, 2)
+);
+
+
+-- Stored Procedure to Add Employee
+CREATE PROCEDURE AddEmployee (
+    IN p_Name VARCHAR(100),
+    IN p_DepartmentID INT,
+    IN p_Salary DECIMAL(10, 2)
+)
+BEGIN
+    INSERT INTO Employee (Name, DepartmentID, Salary)
+    VALUES (p_Name, p_DepartmentID, p_Salary);
+END;
+
+-- Stored Procedure to Calculate Bonus
+CREATE PROCEDURE CalculateBonus (
+    IN p_EmployeeID INT
+)
+BEGIN
+    DECLARE performanceScore INT;
+    -- Fetch performance score based on your metrics
+    SELECT PerformanceScore INTO performanceScore FROM PerformanceMetrics WHERE EmployeeID = p_EmployeeID;
+
+    -- Calculate bonus based on performance
+    UPDATE PerformanceMetrics SET Bonus = performanceScore * 100 WHERE EmployeeID = p_EmployeeID;
+END;
+
+
+--Test Cases
+--1.Add Employee
+EXEC AddEmployee('John Doe', 1, 60000);
+-- Check the database to ensure the record is added
+
+--2. Calculate Bonus
+EXEC CalculateBonus(101);
+-- Check the database to verify the bonus is calculated
+
+

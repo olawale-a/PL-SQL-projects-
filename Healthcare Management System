@@ -1,0 +1,66 @@
+CREATE TABLE Patient (
+    PatientID INT PRIMARY KEY,
+    FirstName VARCHAR(50),
+    LastName VARCHAR(50),
+    DateOfBirth DATE,
+    Gender VARCHAR(10),
+    ContactNumber VARCHAR(15)
+);
+
+CREATE TABLE Doctor (
+    DoctorID INT PRIMARY KEY,
+    FirstName VARCHAR(50),
+    LastName VARCHAR(50),
+    Specialization VARCHAR(50)
+);
+
+CREATE TABLE Appointment (
+    AppointmentID INT PRIMARY KEY,
+    PatientID INT,
+    DoctorID INT,
+    AppointmentDate DATETIME,
+    CONSTRAINT FK_PatientID FOREIGN KEY (PatientID) REFERENCES Patient(PatientID),
+    CONSTRAINT FK_DoctorID FOREIGN KEY (DoctorID) REFERENCES Doctor(DoctorID)
+);
+
+CREATE TABLE MedicalReport (
+    ReportID INT PRIMARY KEY,
+    PatientID INT,
+    MedicalHistory TEXT,
+    ReportDate DATETIME,
+    CONSTRAINT FK_PatientID_MR FOREIGN KEY (PatientID) REFERENCES Patient(PatientID)
+);
+
+
+-- Stored Procedure to Schedule Appointment
+CREATE PROCEDURE ScheduleAppointment (
+    IN p_PatientID INT,
+    IN p_DoctorID INT,
+    IN p_AppointmentDate DATETIME
+)
+BEGIN
+    -- Insert appointment details into Appointment table
+    INSERT INTO Appointment (PatientID, DoctorID, AppointmentDate)
+    VALUES (p_PatientID, p_DoctorID, p_AppointmentDate);
+END;
+
+-- Stored Procedure to Generate Medical Report
+CREATE PROCEDURE GenerateMedicalReport (
+    IN p_PatientID INT,
+    IN p_MedicalHistory TEXT
+)
+BEGIN
+    -- Insert medical report details into MedicalReport table
+    INSERT INTO MedicalReport (PatientID, MedicalHistory, ReportDate)
+    VALUES (p_PatientID, p_MedicalHistory, CURRENT_TIMESTAMP);
+END;
+
+
+-Test Cases
+-1. Schedule Appointment 
+EXEC ScheduleAppointment(101, 201, '2023-12-15 14:30:00');
+-- Check the database to ensure the appointment is scheduled
+
+-2. Generate Medical Report 
+EXEC GenerateMedicalReport(101, 'Patient has a history of hypertension.');
+-- Check the database to verify the medical report is generated
